@@ -33,6 +33,7 @@ global record Message
   Tags: { string: string }
   Data: string
   Owner: string
+  Sender: string
 end
 
 global record TokenNotice
@@ -54,4 +55,7 @@ global record Colors
   blue: string
   reset: string
   gray: string
+end
+
+global function Receive(msg: any): any
 end

@@ -1,35 +1,19 @@
--- Define types
-global record Order
-  id: string
-  quantity: string
-  fulfilled: boolean
-end
+ASTRO_PROCESS_ID = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
+WUSDC_PROCESS_ID = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
 
-global record Message
-  Id: string
-  From: string
-  Sender: string
-  Data: string
-  Tags: {string:string}
-end
-
--- Global variables
-global ASTRO_PROCESS_ID: string = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
-global WUSDC_PROCESS_ID: string = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
-
-global orders: {string: {Order}} = {}
+orders = {}
 
 -- Convert wUSDC to USDA (6 → 12 decimals)
-local function convert_wusdc_to_usda(amount_wusdc: number): integer
-    local DECIMALS_WUSDC: integer = 6
-    local DECIMALS_USDA: integer = 12
+function convert_wusdc_to_usda(amount_wusdc)
+    local DECIMALS_WUSDC = 6
+    local DECIMALS_USDA = 12
 
-    local scale_factor: number = 10 ^ (DECIMALS_USDA - DECIMALS_WUSDC)
+    local scale_factor = 10 ^ (DECIMALS_USDA - DECIMALS_WUSDC)
     return math.floor(amount_wusdc * scale_factor + 0.5) -- rounds to nearest integer
 end
 
-local function swapOrder(msg: Message)
-    -- Check if the message is from the correct process
+function swapOrder(msg)
+    -- -- Check if the message is from the correct process
     if msg.From ~= WUSDC_PROCESS_ID then
         return
     end
@@ -39,9 +23,9 @@ local function swapOrder(msg: Message)
     end
 
     -- Order Creation
-    local new_order: Order = {
+    local new_order = {
         id = msg.Id,
-        quantity = msg.Tags.Quantity,
+        quantity = msg.Quantity,
         fulfilled = false
     }
 
@@ -51,23 +35,27 @@ local function swapOrder(msg: Message)
         Target = msg.Sender,
         Action = "Order-Created",
         OrderId = msg.Id,
-        Quantity = msg.Tags.Quantity,
-        Fulfilled = "false"  -- Changed to string since ao.send expects strings
+        Quantity = msg.Quantity,
+        Fulfilled = false
     })
 
+
     -- Order Fulfillment
-    local amount_usda: integer = convert_wusdc_to_usda(tonumber(msg.Tags.Quantity))
+    amount_usda = convert_wusdc_to_usda(tonumber(msg.Quantity))
+    swap = amount_usda
 
     ao.send({
         Target = ASTRO_PROCESS_ID,
         Action = "Transfer",
-        Recipient = msg.Sender,
-        Quantity = tostring(amount_usda)
+        Tags = {
+            Recipient = msg.Sender,
+            Quantity = tostring(amount_usda)
+        }
     })
+
 
     Receive({ Action = "Debit-Notice", Recipient = msg.Sender })
 
-    -- Mark order as fulfilled
     for _, order in ipairs(orders[msg.Sender]) do
         if order.id == msg.Id then
             order.fulfilled = true
@@ -79,24 +67,24 @@ local function swapOrder(msg: Message)
         Target = msg.Sender,
         Action = "Order-Fulfilled",
         OrderId = msg.Id,
-        Quantity = msg.Tags.Quantity
+        Quantity = msg.Quantity
     })
 end
 
-local function retrySwapOrder(msg: Message)
+function retrySwapOrder(msg)
     if not orders[msg.Sender] then
         return
     end
 
     for _, order in ipairs(orders[msg.Sender]) do
         if order.id == msg.Data and not order.fulfilled then
-            local amount_usda: integer = convert_wusdc_to_usda(tonumber(order.quantity))
-            
             ao.send({
                 Target = ASTRO_PROCESS_ID,
                 Action = "Transfer",
-                Recipient = msg.Sender,
-                Quantity = tostring(amount_usda)
+                Tags = {
+                    Recipient = msg.Sender,
+                    Quantity = tostring(order.quantity)
+                }
             })
 
             ao.send({
@@ -112,18 +100,20 @@ local function retrySwapOrder(msg: Message)
     end
 end
 
-local function withdrawOrder(msg: Message)
+function withdrawOrder(msg)
     if not orders[msg.Sender] then
         return
     end
 
-    for _, order in ipairs(orders[msg.Sender]) do
+    for i, order in ipairs(orders[msg.Sender]) do
         if order.id == msg.Data and not order.fulfilled then
             ao.send({
                 Target = WUSDC_PROCESS_ID,
                 Action = "Transfer",
-                Recipient = msg.Sender,
-                Quantity = order.quantity
+                Tags = {
+                    Recipient = msg.Sender,
+                    Quantity = tostring(order.quantity)
+                }
             })
 
             Receive({ Action = "Debit-Notice", Recipient = msg.Sender })
@@ -145,7 +135,7 @@ local function withdrawOrder(msg: Message)
     })
 end
 
--- Add handlers
+
 Handlers.add('Credit-Notice', Handlers.utils.hasMatchingTag('Action', 'Credit-Notice'), swapOrder)
 Handlers.add('Retry-Swap-Order', Handlers.utils.hasMatchingTag('Action', 'Retry-Swap-Order'), retrySwapOrder)
 Handlers.add('Withdraw-Order', Handlers.utils.hasMatchingTag('Action', 'Withdraw-Order'), withdrawOrder)
