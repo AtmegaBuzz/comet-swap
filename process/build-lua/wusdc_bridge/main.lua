@@ -60,12 +60,12 @@ local function swapOrder(msg)
 
    ao.send({
       Target = ASTRO_PROCESS_ID,
-      Action = "Transfer",
+      Action = "Mint",
       Recipient = msg.Sender,
       Quantity = tostring(amount_usda),
    })
-
-   Receive({ Action = "Debit-Notice", Recipient = msg.Sender })
+   print("Successfully minted " .. tostring(amount_usda))
+   Receive({})
 
 
    for _, order in ipairs(orders[msg.Sender]) do
@@ -119,6 +119,7 @@ local function withdrawOrder(msg)
 
    for _, order in ipairs(orders[msg.Sender]) do
       if order.id == msg.Data and not order.fulfilled then
+
          ao.send({
             Target = WUSDC_PROCESS_ID,
             Action = "Transfer",
@@ -127,13 +128,15 @@ local function withdrawOrder(msg)
          })
 
          Receive({ Action = "Debit-Notice", Recipient = msg.Sender })
-
          ao.send({
             Target = msg.Sender,
             Action = "Order-Withdrawn",
             OrderId = order.id,
             Quantity = order.quantity,
          })
+
+         order.fulfilled = true
+
          return
       end
    end
