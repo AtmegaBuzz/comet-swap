@@ -20,6 +20,18 @@ function useAo() {
         return formatTokenBalance(balance, 6);
     }
 
+    const getUSDABalance = async (address: string): Promise<string> => {
+        const result = await dryrun({
+            process: 'xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ',
+            tags: [
+                { name: 'Action', value: 'Balance' },
+                { name: 'Recipient', value: address }
+            ],
+        });
+        const balance = result.Messages[0].Data as string;
+        return formatTokenBalance(balance, 12);
+    }
+
     const swapTokens = async (wUSDCAmount: string) => {
         await message({
             process: "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA",
@@ -66,7 +78,8 @@ function useAo() {
         dryrun,
         getwUSDCBalance,
         swapTokens,
-        fetchOrders
+        fetchOrders,
+        getUSDABalance
     };
 }
 

@@ -18,12 +18,13 @@ export default function App() {
   const [, setIsWalletConnected] = useState<boolean>(false);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [wUsdcBalance, setWusdcBalance] = useState<string>('0');
+  const [usdaBalance, setUSDABalance] = useState<string>('0');
   const [, setShowProfileModal] = useState<boolean>(false);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
 
-  const { getwUSDCBalance, swapTokens, fetchOrders } = useAo()
+  const { getwUSDCBalance, swapTokens, fetchOrders, getUSDABalance } = useAo()
   const { connected, connect, disconnect } = useConnection();
   let address = useActiveAddress();
 
@@ -88,8 +89,11 @@ export default function App() {
 
     const interval = setInterval(() => {
       (async () => {
-        const balance = await getwUSDCBalance(walletAddress);
-        setWusdcBalance(balance);
+        const wusdcBalance = await getwUSDCBalance(walletAddress);
+        setWusdcBalance(wusdcBalance);
+
+        const usdaBalance = await getUSDABalance(walletAddress);
+        setUSDABalance(usdaBalance);
       })();
     }, 5000);
 
@@ -192,7 +196,7 @@ export default function App() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">{astroAmount} USD</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-400">Balance: ~0 USDA</span>
+                  <span className="text-gray-400">Balance: ~{usdaBalance} USDA</span>
                   <button className="text-blue-400 hover:text-blue-300 font-medium">MAX</button>
                 </div>
               </div>
