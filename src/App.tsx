@@ -198,6 +198,25 @@ export default function App() {
               </div>
             </div>
 
+            {/* Connect Arweave Wallet Button */}
+            <button
+              onClick={() => {
+                connected ? swapTokens(wUSDCAmount) : handleConnectWallet()
+              }}
+              disabled={isLoading || !connected}
+              className="w-full font-medium py-2 px-6 rounded-xl transition-colors duration-200 text-white"
+              style={{
+                backgroundColor: connected ? '#6366F1' : '#3F539F',
+                opacity: isLoading ? 0.6 : 1
+              }}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Processing...</span>
+                </div>
+              ) : 'Swap Tokens'}
+            </button>
           </div>
         </div>
 
