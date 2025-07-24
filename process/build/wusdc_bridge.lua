@@ -1921,7 +1921,9 @@ return {
 end
 end
 
-local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = pcall(require, 'compat53.module'); if p then _tl_compat = m end end; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local math = _tl_compat and _tl_compat.math or math; local table = _tl_compat and _tl_compat.table or table
+local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = pcall(require, 'compat53.module'); if p then _tl_compat = m end end; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local math = _tl_compat and _tl_compat.math or math; local table = _tl_compat and _tl_compat.table or table; local json = require("json")
+
+
 Order = {}
 
 
@@ -1940,7 +1942,8 @@ Message = {}
 ASTRO_PROCESS_ID = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
 WUSDC_PROCESS_ID = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
 
-orders = {}
+
+orders = orders or {}
 
 
 local function convert_wusdc_to_usda(amount_wusdc)
@@ -2072,6 +2075,22 @@ local function withdrawOrder(msg)
 end
 
 
+local function fetchOrders(msg)
+
+   local requested_orders = orders[msg.Recipient]
+   print(msg.Recipient)
+   print(requested_orders)
+
+   ao.send({
+      Target = msg.From,
+      Action = "Orders-Response",
+      Data = json.encode(requested_orders),
+   })
+
+end
+
+
 Handlers.add('Credit-Notice', Handlers.utils.hasMatchingTag('Action', 'Credit-Notice'), swapOrder)
 Handlers.add('Retry-Swap-Order', Handlers.utils.hasMatchingTag('Action', 'Retry-Swap-Order'), retrySwapOrder)
 Handlers.add('Withdraw-Order', Handlers.utils.hasMatchingTag('Action', 'Withdraw-Order'), withdrawOrder)
+Handlers.add('Fetch-Orders', Handlers.utils.hasMatchingTag('Action', 'Fetch-Orders'), fetchOrders)

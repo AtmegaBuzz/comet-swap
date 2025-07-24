@@ -34,6 +34,7 @@ global record Message
   Data: string
   Owner: string
   Sender: string
+  Recipient: string
 end
 
 global record TokenNotice

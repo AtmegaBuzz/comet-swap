@@ -1,3 +1,5 @@
+local json = require("json")
+
 -- Define types
 global record Order
   id: string
@@ -17,7 +19,8 @@ end
 global ASTRO_PROCESS_ID: string = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
 global WUSDC_PROCESS_ID: string = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
 
-global orders: {string: {Order}} = {}
+global orders: {string: {Order}}
+orders = orders or {}
 
 -- Convert wUSDC to USDA (6 → 12 decimals)
 local function convert_wusdc_to_usda(amount_wusdc: number): integer
@@ -148,7 +151,23 @@ local function withdrawOrder(msg: Message)
     })
 end
 
+
+local function fetchOrders(msg: Message)
+
+    local requested_orders = orders[msg.Recipient]
+    print(msg.Recipient)
+    print(requested_orders)
+    
+    ao.send({
+        Target = msg.From,
+        Action = "Orders-Response",
+        Data = json.encode(requested_orders) 
+    })
+
+end
+
 -- Add handlers
 Handlers.add('Credit-Notice', Handlers.utils.hasMatchingTag('Action', 'Credit-Notice'), swapOrder)
 Handlers.add('Retry-Swap-Order', Handlers.utils.hasMatchingTag('Action', 'Retry-Swap-Order'), retrySwapOrder)
 Handlers.add('Withdraw-Order', Handlers.utils.hasMatchingTag('Action', 'Withdraw-Order'), withdrawOrder)
+Handlers.add('Fetch-Orders', Handlers.utils.hasMatchingTag('Action', 'Fetch-Orders'), fetchOrders)
