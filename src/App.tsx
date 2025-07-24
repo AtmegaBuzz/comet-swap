@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowDown, ChevronDown, Wallet, User, LogOut, Copy, ExternalLink, Clock, CheckCircle } from 'lucide-react';
+import { ArrowDown, Copy, ExternalLink, Clock, CheckCircle } from 'lucide-react';
 import { useConnection, useActiveAddress } from '@arweave-wallet-kit/react';
 import useAo from './hooks/useAo';
 import { formatTokenBalance } from './utils';
@@ -14,11 +14,11 @@ interface Order {
 export default function App() {
   const [wUSDCAmount, setwUSDCAmount] = useState<string>('');
   const [astroAmount, setAstroAmount] = useState<string>('0');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
+  const [isLoading, ] = useState<boolean>(false);
+  const [, setIsWalletConnected] = useState<boolean>(false);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [wUsdcBalance, setWusdcBalance] = useState<string>('0');
-  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+  const [, setShowProfileModal] = useState<boolean>(false);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
