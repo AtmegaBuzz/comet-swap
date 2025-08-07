@@ -58,5 +58,5 @@ global record Colors
   gray: string
 end
 
-global function Receive(msg: any): any
+global function Receive(msg: any): Message
 end
