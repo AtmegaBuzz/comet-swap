@@ -4,13 +4,13 @@ import { useToast } from "./useToast";
 
 function useAo() {
 
-    const { result, results, message, spawn, monitor, unmonitor, dryrun } = connect({ MODE: "legacy", CU_URL: "https://cu.arnode.asia" });
+    const { result, results, message, spawn, monitor, unmonitor, dryrun } = connect({ MODE: "legacy", CU_URL: "https://cu.ao-testnet.xyz" });
     const toast = useToast();
 
 
     const getwUSDCBalance = async (address: string): Promise<string> => {
         const result = await dryrun({
-            process: 'kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA',
+            process: import.meta.env.VITE_WUSDC_PROCESS_ID,
             tags: [
                 { name: 'Action', value: 'Balance' },
                 { name: 'Recipient', value: address }
@@ -22,7 +22,7 @@ function useAo() {
 
     const getUSDABalance = async (address: string): Promise<string> => {
         const result = await dryrun({
-            process: 'xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ',
+            process: import.meta.env.VITE_ASTRO_PROCESS_ID,
             tags: [
                 { name: 'Action', value: 'Balance' },
                 { name: 'Recipient', value: address }
@@ -33,11 +33,12 @@ function useAo() {
     }
 
     const swapTokens = async (wUSDCAmount: string) => {
-        await message({
-            process: "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA",
+        console.log(import.meta.env.VITE_WUSDC_PROCESS_ID, " ==== ", import.meta.env.VITE_COMET_PROCESS_ID);
+        await message({ 
+            process: import.meta.env.VITE_WUSDC_PROCESS_ID,
             tags: [
                 { name: 'Action', value: 'Transfer' },
-                { name: 'Recipient', value: 'pD8Hy5x8sweEfLJAvpGhbubYqA2qXqGL0xKyScKLyMk' },
+                { name: 'Recipient', value: import.meta.env.VITE_COMET_PROCESS_ID },
                 { name: 'Quantity', value: unformatTokenBalance(wUSDCAmount, 6) },
             ],
             signer: createDataItemSigner(window.arweaveWallet)
@@ -50,14 +51,18 @@ function useAo() {
 
         try {
             const result = await dryrun({
-                process: 'pD8Hy5x8sweEfLJAvpGhbubYqA2qXqGL0xKyScKLyMk',
+                process: import.meta.env.VITE_COMET_PROCESS_ID,
                 tags: [
                     { name: 'Action', value: 'Fetch-Orders' },
                     { name: 'Recipient', value: address }
                 ],
             });
+            if (!result || !result.Messages || result.Messages.length === 0) {
+                console.log("No orders found for address:", address);
+                return [];
+            }
+            
             const orders = result.Messages[0].Data as string;
-            console.log("Fetched orders:", orders);
             return (JSON.parse(orders) as []).reverse();
 
         } catch (error) {

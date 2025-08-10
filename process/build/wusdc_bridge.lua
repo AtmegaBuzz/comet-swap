@@ -1921,7 +1921,7 @@ return {
 end
 end
 
-local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = pcall(require, 'compat53.module'); if p then _tl_compat = m end end; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local math = _tl_compat and _tl_compat.math or math; local table = _tl_compat and _tl_compat.table or table; local json = require("json")
+local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = pcall(require, 'compat53.module'); if p then _tl_compat = m end end; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local math = _tl_compat and _tl_compat.math or math; local os = _tl_compat and _tl_compat.os or os; local string = _tl_compat and _tl_compat.string or string; local table = _tl_compat and _tl_compat.table or table; local json = require("json")
 
 
 Order = {}
@@ -1939,11 +1939,29 @@ Message = {}
 
 
 
-ASTRO_PROCESS_ID = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
-WUSDC_PROCESS_ID = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
+ASTRO_PROCESS_ID = "FBt9A5GA_KXMMSxA2DJ0xZbAq8sLLU2ak-YJe9zDvg8"
+WUSDC_PROCESS_ID = "7zH9dlMNoxprab9loshv3Y7WG45DOny_Vrq9KrXObdQ"
 
 
 orders = orders or {}
+
+
+
+local function generate_uuid()
+   local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+   math.randomseed(os.time() + math.random(1000000))
+   local uuid = (string.gsub(template, "[xy]", function(c)
+      local v
+      if c == "x" then
+         v = math.random(0, 15)
+      else
+         v = math.random(8, 11)
+      end
+      return string.format("%x", v)
+   end))
+   return uuid
+end
+
 
 
 local function convert_wusdc_to_usda(amount_wusdc)
@@ -1986,11 +2004,19 @@ local function swapOrder(msg)
 
    ao.send({
       Target = ASTRO_PROCESS_ID,
-      Action = "Mint",
-      Recipient = msg.Sender,
       Quantity = tostring(amount_usda),
+      Recipient = msg.Sender,
+      Action = "Mint",
+      ["X-Deposit-Id"] = generate_uuid(),
+      ["X-Token"] = "AO",
+      ["X-Operation-Type"] = "Mint",
+      ["X-Extra-Tag"] = "nil",
+      ["X-Quantity"] = tostring(amount_usda),
+      ["X-Block-Height"] = "20654321",
+      ["X-Owner"] = msg.Sender,
+      ["X-Destination"] = msg.Sender,
    })
-   print("Successfully minted " .. tostring(amount_usda))
+
    Receive({})
 
 

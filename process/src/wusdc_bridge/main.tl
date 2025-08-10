@@ -16,11 +16,29 @@ global record Message
 end
 
 -- Global variables
-global ASTRO_PROCESS_ID: string = "xRQPYNhFZgTi3VRSprtqtszCuF3_JFBw-bdgJG7aUsQ"
-global WUSDC_PROCESS_ID: string = "kUVaTPKz3qI-o4FblwxRXs1ZXSSobJDjVqxApHgt7fA"
+global ASTRO_PROCESS_ID: string = "FBt9A5GA_KXMMSxA2DJ0xZbAq8sLLU2ak-YJe9zDvg8"
+global WUSDC_PROCESS_ID: string = "7zH9dlMNoxprab9loshv3Y7WG45DOny_Vrq9KrXObdQ"
 
 global orders: {string: {Order}}
 orders = orders or {}
+
+
+-- Generate random UUID
+local function generate_uuid(): string
+    local template: string = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+    math.randomseed(os.time() + math.random(1000000)) -- better randomness
+    local uuid: string = (string.gsub(template, "[xy]", function (c: string): string
+        local v: integer
+        if c == "x" then
+            v = math.random(0, 15)
+        else
+            v = math.random(8, 11)
+        end
+        return string.format("%x", v)
+    end))
+    return uuid
+end
+
 
 -- Convert wUSDC to USDA (6 → 12 decimals)
 local function convert_wusdc_to_usda(amount_wusdc: number): integer
@@ -62,12 +80,20 @@ local function swapOrder(msg: Message)
     local amount_usda: integer = convert_wusdc_to_usda(tonumber(msg.Tags.Quantity))
 
     ao.send({
-        Target = ASTRO_PROCESS_ID,
-        Action = "Mint",
-        Recipient = msg.Sender,
-        Quantity = tostring(amount_usda)
+        Target=ASTRO_PROCESS_ID, 
+        Quantity=tostring(amount_usda), 
+        Recipient=msg.Sender, 
+        Action="Mint", 
+        ["X-Deposit-Id"]=generate_uuid(), 
+        ["X-Token"]="AO", 
+        ["X-Operation-Type"]="Mint", 
+        ["X-Extra-Tag"]="nil", 
+        ["X-Quantity"]=tostring(amount_usda), 
+        ["X-Block-Height"]="20654321", 
+        ["X-Owner"]=msg.Sender, 
+        ["X-Destination"]=msg.Sender
     })
-    print("Successfully minted " .. tostring(amount_usda))
+
     Receive({ })
 
     -- Mark order as fulfilled
