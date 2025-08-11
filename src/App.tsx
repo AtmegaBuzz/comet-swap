@@ -106,7 +106,9 @@ export default function App() {
     const interval = setInterval(() => {
       (async () => {
         const orders = await fetchOrders(walletAddress);
-        setMyOrders(orders);
+        if (orders !== null) {
+          setMyOrders(orders);
+        }
       })();
     }, 5000);
 

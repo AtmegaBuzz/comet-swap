@@ -33,7 +33,6 @@ function useAo() {
     }
 
     const swapTokens = async (wUSDCAmount: string) => {
-        console.log(import.meta.env.VITE_WUSDC_PROCESS_ID, " ==== ", import.meta.env.VITE_COMET_PROCESS_ID);
         await message({ 
             process: import.meta.env.VITE_WUSDC_PROCESS_ID,
             tags: [
@@ -59,7 +58,7 @@ function useAo() {
             });
             if (!result || !result.Messages || result.Messages.length === 0) {
                 console.log("No orders found for address:", address);
-                return [];
+                return null;
             }
             
             const orders = result.Messages[0].Data as string;
@@ -67,7 +66,7 @@ function useAo() {
 
         } catch (error) {
             console.log("Error fetching orders:", error);
-            return [];
+            return null;
         }
 
     }
